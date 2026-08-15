@@ -384,7 +384,7 @@ for sheet_name in all_sheets:
                 api_err_msg = str(api_e)
                 # 偵測到 429 錯誤，觸發自動休眠
                 if "429" in api_err_msg or "RESOURCE_EXHAUSTED" in api_err_msg or "503" in api_err_msg or "UNAVAILABLE" in api_err_msg:
-                    wait_time = 60 # 等待 60 秒後重試
+                    wait_time = 60  # 等待 60 秒後重試
                     print(f"  ⏳ [觸發限制] 被 Google 擋了！程式自動休眠 {wait_time} 秒後重試... (第 {attempt + 1}/{max_retries} 次)")
                     time.sleep(wait_time)
                 else:
