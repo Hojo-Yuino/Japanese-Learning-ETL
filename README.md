@@ -51,23 +51,25 @@ Excel 自動輸出
 Japanese-Learning-ETL/
 ├── src/
 │   └── main.py
+├── output/              # 執行後自動建立，存放 Excel 輸出
 ├── .gitignore
 ├── README.md
 └── requirements.txt
 ```
 
-目前主要流程集中於 `src/main.py`，保留原始實作邏輯，僅調整 GitHub 專案結構與檔案位置。
+主要 ETL 流程集中於 `src/main.py`，輸出檔案統一寫入專案根目錄下的 `output/` 資料夾。
 
 ---
 
 ## 功能
 
 - 自動取得 Note.com 文章
-- HTML 內容清洗
-- 段落切割
-- API 翻譯
-- 學習筆記生成
-- Excel 自動輸出
+- HTML / JSON 內容解析
+- 日文段落切割與雜訊清理
+- Gemini API 翻譯
+- 日文學習筆記生成
+- API 暫時性錯誤重試
+- 多工作表 Excel 自動輸出
 
 ---
 
@@ -105,11 +107,53 @@ pip install -r requirements.txt
 
 ---
 
+## 設定 Gemini API Key
+
+程式透過環境變數 `GEMINI_API_KEY` 讀取 API Key，請勿將真實金鑰提交至 GitHub。
+
+Windows PowerShell：
+
+```powershell
+$env:GEMINI_API_KEY="your_api_key_here"
+```
+
+Windows Command Prompt：
+
+```cmd
+set GEMINI_API_KEY=your_api_key_here
+```
+
+macOS / Linux：
+
+```bash
+export GEMINI_API_KEY="your_api_key_here"
+```
+
+---
+
+## 執行方式
+
+在專案根目錄執行：
+
+```bash
+python src/main.py
+```
+
+程式會自動建立 `output/` 資料夾，並輸出：
+
+```text
+output/
+├── NOTE_日文學習_.xlsx
+└── NOTE_日文學習_AI翻譯版.xlsx
+```
+
+---
+
 ## 注意事項
 
 - Gemini API Key 不應提交至 GitHub。
-- 輸出的 Excel 檔案已透過 `.gitignore` 排除。
-- 本專案目前以 Windows 本機環境進行開發與測試。
+- 輸出的 Excel 檔案與 `output/` 資料夾已透過 `.gitignore` 排除。
+- Note.com 頁面或 API 結構若變更，解析邏輯可能需要同步調整。
 
 ---
 
