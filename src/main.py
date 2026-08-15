@@ -128,7 +128,7 @@ else:
                 # 原始切法
                 raw_lines = text.split('\n')
                 
-                # --- 【核心修正】：遍歷每一行，如果裡面有日文句點「。」，就強制再切開！ ---
+                # 依日文句點「。」進一步切分句子
                 lines = []
                 for line in raw_lines:
                     line_str = line.strip()
@@ -190,13 +190,13 @@ target_folder = r"E:\AI-project\日文爬蟲"
 save_path = os.path.join(target_folder, "NOTE_日文學習_.xlsx")
 
 if final_data:
-    print(f"\n執行「極限字元去磁模式」封裝，徹底根除 Excel 結構警告...")
+    print(f"\n正在清理資料並建立 Excel 檔案...")
     if not os.path.exists(target_folder): 
         os.makedirs(target_folder)
     
     used_names = set()
 
-    # 直接使用原生 xlsxwriter 開檔
+    # 使用 XlsxWriter 建立 Excel 活頁簿
     workbook = xlsxwriter.Workbook(save_path)
     
     # --- 定義基本格式 ---
@@ -206,11 +206,11 @@ if final_data:
     link_fmt  = workbook.add_format({'color': 'blue', 'underline': 1, 'valign':'vcenter'})
 
     for i, item in enumerate(final_data):
-        # 1. 【強力清洗】移除非法字元
+        # 移除工作表名稱中的非法字元
         raw_title = item.get('標題', '')
         clean_t = re.sub(r'[^\w\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]', '', raw_title)
         
-        # 2. 決定分頁格式名稱
+        # 決定分頁格式名稱
         short_t = clean_t[:15].strip('_').strip()
         ws_name = f"{i+1}_{short_t}" 
         
@@ -218,7 +218,7 @@ if final_data:
             ws_name = f"Note_Page_{i+1}"
         used_names.add(ws_name)
         
-        # 3. 建立工作表
+        # 建立工作表
         try:
             ws = workbook.add_worksheet(ws_name)
         except Exception as e:
@@ -229,7 +229,7 @@ if final_data:
         ws.set_column('B:B', 80)
         ws.set_column('C:C', 40)
         
-        # 4. 寫入大標題與連結
+        # 寫入大標題與連結
         ws.merge_range('A1:C1', raw_title, title_fmt)
         ws.set_row(0, 35)
         
@@ -237,13 +237,13 @@ if final_data:
         ws.write('B2', item.get('連結', '無'), link_fmt)
         ws.set_row(1, 25)
         
-        # 5. 欄位標頭
+        # 欄位標頭
         ws.write('A3', '段落', label_fmt)
         ws.write('B3', '日文原文', label_fmt)
         ws.write('C3', '學習筆記', label_fmt)
         ws.set_row(2, 25)
 
-        # 6. 配置核心過濾器
+        # 配置核心過濾器
         valid_idx = 0
         stop_keywords = [
             "いいなと思ったら応援しよう", 
@@ -253,29 +253,29 @@ if final_data:
             "マガジンを購読する",
             "この記事が気に入ったら、サポートをしてみませんか？"
         ]
-        # 深度黑名單
+        # 排除下載、複製等非文章內容
         blacklist = ["ダウンロード", "copy", "下載", "複製"]
 
-        # === 【完美修正】：合併成唯一的輸送帶迴圈，確保邊檢查邊寫入 ===
+        # 過濾段落內容後寫入 Excel
         for p_raw in item.get('段落', []):
             p = p_raw.strip()
             
-            # 防線 A：強效切斷器 (碰到底部元件直接中止)
+            # 偵測文章底部元件，符合關鍵字時停止處理
             if any(k in p for k in stop_keywords):
                 break 
             
-            # 防線 B：黑名單過濾器 (跳過不想看到的字，大小寫通殺)
+            # 過濾黑名單中的非文章內容
             if any(word in p.lower() for word in blacklist):
                 continue  
             
-            # 防線 C：基礎清理 (移除日期時間、純數字讚數、洗掉井字鍵標籤)
+            # 移除日期時間、純數字與標籤等非文章內容
             p = re.sub(r'\d{4}年\d{1,2}月\d{1,2}日\s+\d{2}:\d{2}', '', p).strip()
             if not p or re.match(r'^\d+$', p):
                 continue
             if p.startswith('#'):
                 continue
 
-            # === 通過所有防線，正式登錄 Excel ===
+            # 將通過過濾的段落寫入 Excel
             curr_row = valid_idx + 3
             ws.write(curr_row, 0, f"P{valid_idx+1}", label_fmt)
             
@@ -364,9 +364,7 @@ for sheet_name in all_sheets:
     translated_paragraphs = []
     
     try:
-        # ==========================================
-        #  智慧休眠重試機制 (最多重試 2 次)
-        # ==========================================
+        # API 請求失敗時的重試機制（最多 2 次）
         max_retries = 2
         response = None
         
@@ -386,21 +384,21 @@ for sheet_name in all_sheets:
                 api_err_msg = str(api_e)
                 # 偵測到 429 錯誤，觸發自動休眠
                 if "429" in api_err_msg or "RESOURCE_EXHAUSTED" in api_err_msg or "503" in api_err_msg or "UNAVAILABLE" in api_err_msg:
-                    wait_time = 60  # 直接休息 240 秒保平安
+                    wait_time = 60 # 等待 60 秒後重試
                     print(f"  ⏳ [觸發限制] 被 Google 擋了！程式自動休眠 {wait_time} 秒後重試... (第 {attempt + 1}/{max_retries} 次)")
                     time.sleep(wait_time)
                 else:
                     # 如果是其他未知的嚴重錯誤，就往外拋給下一層處理
                     raise api_e
         else:
-            # 如果跑完 5 次都被擋，才真的發出錯誤
-            raise Exception("連續 5 次觸發 API 頻率限制，放棄本篇。")
+            # 連續 2 次請求失敗後放棄本篇
+            raise Exception("連續 2 次觸發 API 頻率限制，放棄本篇。")
 
         # ==========================================
         
         res_list = json.loads(response.text)
         
-        # 銅牆鐵壁：終極暴力安全解包機制
+        # 解析並兼容不同格式的 Gemini JSON 回傳結果
         ai_results_dict = {}
         
         if isinstance(res_list, list):
