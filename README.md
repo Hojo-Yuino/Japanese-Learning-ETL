@@ -45,6 +45,21 @@ Excel 自動輸出
 
 ---
 
+## 專案結構
+
+```text
+Japanese-Learning-ETL/
+├── src/
+│   └── main.py
+├── .gitignore
+├── README.md
+└── requirements.txt
+```
+
+目前主要流程集中於 `src/main.py`，保留原始實作邏輯，僅調整 GitHub 專案結構與檔案位置。
+
+---
+
 ## 功能
 
 - 自動取得 Note.com 文章
@@ -63,6 +78,22 @@ Excel 自動輸出
 - 資料清洗 (Data Cleaning)
 - 自動化流程設計
 - Excel 報表自動產生
+
+---
+
+## 安裝依賴
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 注意事項
+
+- Gemini API Key 不應提交至 GitHub。
+- 輸出的 Excel 檔案已透過 `.gitignore` 排除。
+- 本專案目前以 Windows 本機環境進行開發與測試。
 
 ---
 
